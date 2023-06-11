@@ -145,7 +145,6 @@ let pack list =
         else aux (acc2 :: acc) [x] xs
   in
   aux [] [] list
-  |> List.map (List.rev)
   |> List.rev
 ;;
 
@@ -153,5 +152,166 @@ pack ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
 ;;
 
 let%test _ = pack ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
+             = [["a"; "a"; "a"; "a"]; ["b"]; ["c"; "c"]; ["a"; "a"]; ["d"; "d"]; ["e"; "e"; "e"; "e"]]
+
+let pack_2 list =
+  let rec aux current acc = function
+    | [] -> []
+    | [x] -> (x :: current) :: acc
+    | a :: (b :: _ as t) ->
+      if a = b
+      then aux (a :: current) acc t
+      else aux [] ((a :: current) :: acc) t
+  in
+  List.rev (aux [] [] list);;
+
+let%test _ = pack_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
              = [["a"; "a"; "a"; "a"]; ["b"]; ["c"; "c"]; ["a"; "a"]; ["d"; "d"];
                 ["e"; "e"; "e"; "e"]]
+
+let encode list =
+  let rec aux (count, _) acc = function
+    | [] -> []
+    | [x] -> (count + 1, x) :: acc
+    | a :: (b :: _ as t) ->
+      if a = b
+      then aux (count + 1, Some a) acc t
+      else aux (0, Some b) ((count + 1, a) :: acc) t
+  in
+  List.rev (aux (0, None) [] list)
+;;
+
+encode ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+;;
+
+let%test _ = encode ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+             = [(4, "a"); (1, "b"); (2, "c"); (2, "a"); (1, "d"); (4, "e")]
+
+
+let encode_2 list =
+  let rec aux count acc = function
+    | [] -> []
+    | [x] -> (count + 1, x) :: acc
+    | a :: (b :: _ as t) ->
+      if a = b
+      then aux (count + 1) acc t
+      else aux 0 ((count + 1, a) :: acc) t
+  in
+  List.rev (aux 0 [] list)
+;;
+
+encode_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+;;
+
+let%test _ = encode_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+             = [(4, "a"); (1, "b"); (2, "c"); (2, "a"); (1, "d"); (4, "e")]
+
+module Rle = struct
+  type 'a rle =
+    | One of 'a
+    | Many of int * 'a
+
+  let create a = function
+    | 1 -> One a
+    | n -> Many (n, a)
+end
+
+open Rle
+
+let encode_b list =
+  let rec aux count acc = function
+    | [] -> []
+    | [x] -> (Rle.create x (count + 1)) :: acc
+    | a :: (b :: _ as t) ->
+      if a = b
+      then aux (count + 1) acc t
+      else aux 0 ((Rle.create a (count + 1)) :: acc) t
+  in
+  List.rev (aux 0 [] list)
+;;
+
+let%test _ = encode_b ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+             = [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d";
+                Many (4, "e")]
+
+let const a _ = a
+;;
+
+let decode list =
+  let rec aux acc = function
+    | [] -> acc
+    | One x :: xs -> aux (x :: acc) xs
+    | Many (c, x) :: xs -> aux ((List.init c (const x)) @ acc) xs
+  in
+  List.rev (aux [] list)
+;;
+
+decode [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+;;
+
+let%test _ = decode [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+             = ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+;;
+
+let decode_2 list =
+  let rec many acc n x =
+    if n = 0 then acc else many (x :: acc) (n - 1) x
+  in
+  let rec aux acc = function
+    | [] -> acc
+    | One x :: xs -> aux (x :: acc) xs
+    | Many (c, x) :: xs -> aux (many acc c x) xs
+  in
+  List.rev (aux [] list)
+;;
+
+decode_2 [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+;;
+
+let%test _ = decode_2 [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+             = ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+;;
+
+(* let duplicate list = *)
+(*   let rec aux state acc list = match state, list with *)
+(*     | None  , x :: _  -> aux (Some x) (x :: acc) list *)
+(*     | Some s, _ :: xs -> aux (None  ) (s :: acc) xs *)
+(*     | None, [] | Some _, [] -> acc *)
+(*   in *)
+(*   List.rev (aux None [] list) *)
+
+(* type dup = | Repeat | No ;; *)
+
+let duplicate list =
+  let rec aux acc = function
+    | [] -> acc
+    | x :: xs -> aux (x :: x :: acc) xs
+  in
+  (* List.rev (aux [] list) *)
+  aux [] (List.rev list)
+;;
+
+duplicate ["a"; "b"; "c"; "c"; "d"]
+;;
+
+let%test _ = duplicate ["a"; "b"; "c"; "c"; "d"]
+             = ["a"; "a"; "b"; "b"; "c"; "c"; "c"; "c"; "d"; "d"]
+
+let replicate list times =
+  let rec repeat count acc x =
+    if count > 0
+    then repeat (count - 1) (x :: acc) x
+    else acc
+  in
+  let rec aux acc = function
+    | [] -> acc
+    | x :: xs -> aux (repeat times acc x) xs
+  in
+  aux [] (List.rev list)
+;;
+
+replicate ["a"; "b"; "c"] 3;;
+
+let%test _ = replicate ["a"; "b"; "c"] 3 = ["a"; "a"; "a"; "b"; "b"; "b"; "c"; "c"; "c"]
+;;
+

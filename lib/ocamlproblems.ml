@@ -77,7 +77,7 @@ let rec flatten (list : 'a node list) : 'a list =
   | head::tail -> (flatten [head]) @ (flatten tail)
 ;;
 
-let flatten_2 list =
+let flatten_solution list =
   let rec aux acc = function
     | [] -> acc
     | One x :: t -> aux (x :: acc) t
@@ -105,11 +105,11 @@ let compress (list : 'a list) =
 let%test _ = compress ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
              = ["a"; "b"; "c"; "a"; "d"; "e"]
 
-let rec compress_2 = function
-  | a :: (b :: _ as t) -> if a = b then compress_2 t else a :: compress_2 t
+let rec compress_solution = function
+  | a :: (b :: _ as t) -> if a = b then compress_solution t else a :: compress_solution t
   | smaller -> smaller
 
-let%test _ = compress_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+let%test _ = compress_solution ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
              = ["a"; "b"; "c"; "a"; "d"; "e"]
 (* let pack = *)
 (*   let rec aux acc = function *)
@@ -154,7 +154,7 @@ pack ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
 let%test _ = pack ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
              = [["a"; "a"; "a"; "a"]; ["b"]; ["c"; "c"]; ["a"; "a"]; ["d"; "d"]; ["e"; "e"; "e"; "e"]]
 
-let pack_2 list =
+let pack_solution list =
   let rec aux current acc = function
     | [] -> []
     | [x] -> (x :: current) :: acc
@@ -165,7 +165,7 @@ let pack_2 list =
   in
   List.rev (aux [] [] list);;
 
-let%test _ = pack_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
+let%test _ = pack_solution ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "d"; "e"; "e"; "e"; "e"]
              = [["a"; "a"; "a"; "a"]; ["b"]; ["c"; "c"]; ["a"; "a"]; ["d"; "d"];
                 ["e"; "e"; "e"; "e"]]
 
@@ -188,7 +188,7 @@ let%test _ = encode ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e";
              = [(4, "a"); (1, "b"); (2, "c"); (2, "a"); (1, "d"); (4, "e")]
 
 
-let encode_2 list =
+let encode_solution list =
   let rec aux count acc = function
     | [] -> []
     | [x] -> (count + 1, x) :: acc
@@ -200,10 +200,10 @@ let encode_2 list =
   List.rev (aux 0 [] list)
 ;;
 
-encode_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+encode_solution ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
 ;;
 
-let%test _ = encode_2 ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
+let%test _ = encode_solution ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
              = [(4, "a"); (1, "b"); (2, "c"); (2, "a"); (1, "d"); (4, "e")]
 
 module Rle = struct
@@ -253,7 +253,7 @@ let%test _ = decode [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "
              = ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
 ;;
 
-let decode_2 list =
+let decode_solution list =
   let rec many acc n x =
     if n = 0 then acc else many (x :: acc) (n - 1) x
   in
@@ -265,10 +265,10 @@ let decode_2 list =
   List.rev (aux [] list)
 ;;
 
-decode_2 [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+decode_solution [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
 ;;
 
-let%test _ = decode_2 [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
+let%test _ = decode_solution [Many (4, "a"); One "b"; Many (2, "c"); Many (2, "a"); One "d"; Many (4, "e")]
              = ["a"; "a"; "a"; "a"; "b"; "c"; "c"; "a"; "a"; "d"; "e"; "e"; "e"; "e"]
 ;;
 
@@ -315,3 +315,146 @@ replicate ["a"; "b"; "c"] 3;;
 let%test _ = replicate ["a"; "b"; "c"] 3 = ["a"; "a"; "a"; "b"; "b"; "b"; "c"; "c"; "c"]
 ;;
 
+let drop list every =
+  let rec aux count acc = function
+    | [] -> acc
+    | x :: xs ->
+      if count = every
+      then aux 1 acc xs
+      else aux (count + 1) (x :: acc) xs
+  in
+  aux 1 [] list
+  |> List.rev
+;;
+
+drop ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+;;
+
+let%test _ = drop ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+             = ["a"; "b"; "d"; "e"; "g"; "h"; "j"]
+
+let drop_solution list every =
+  let rec aux count = function
+    | [] -> []
+    | x :: xs ->
+      if count = every
+      then aux 1 xs
+      else x :: aux (count + 1) xs
+  in
+  aux 1 list
+;;
+
+drop_solution ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+;;
+
+let%test _ = drop_solution ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+             = ["a"; "b"; "d"; "e"; "g"; "h"; "j"]
+
+let split list at =
+  let rec aux count (acc_l, acc_r) = function
+    | [] -> (acc_l, acc_r)
+    | x :: xs ->
+      if count < at
+      then aux (count + 1) (x :: acc_l, acc_r) xs
+      else aux (count + 1) (acc_l, x :: acc_r) xs
+  in
+  let (acc_l, acc_r) = aux 0 ([], []) list in
+  (List.rev acc_l, List.rev acc_r)
+;;
+
+split ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+;;
+
+let%test _ = split ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+             = (["a"; "b"; "c"], ["d"; "e"; "f"; "g"; "h"; "i"; "j"])
+
+let%test _ = split ["a"; "b"; "c"; "d"] 5
+             = (["a"; "b"; "c"; "d"], [])
+
+let split_solution list n =
+  let rec aux i acc = function
+    | [] -> List.rev acc, []
+    | h :: t as l ->
+      if i = 0
+      then List.rev acc, l
+      else aux (i - 1) (h :: acc) t
+  in
+  aux n [] list
+;;
+
+let%test _ = split_solution ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 3
+             = (["a"; "b"; "c"], ["d"; "e"; "f"; "g"; "h"; "i"; "j"])
+
+let%test _ = split_solution ["a"; "b"; "c"; "d"] 5
+             = (["a"; "b"; "c"; "d"], [])
+
+let slice list from until =
+  let rec aux index = function
+    | [] -> []
+    | x :: xs ->
+      if from <= index
+      then (
+        if index <= until
+        then x :: aux (index + 1) xs
+        else []
+      )
+      else aux (index + 1) xs
+  in
+  aux 0 list
+;;
+
+let%test _ = slice ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 2 6
+             = ["c"; "d"; "e"; "f"; "g"]
+;;
+
+(* Tail recursive *)
+let slice_2 list from until =
+  let rec aux index acc = function
+    | [] -> acc
+    | x :: xs ->
+      if from <= index
+      then (
+        if index <= until
+        then aux (index + 1) (x :: acc) xs
+        else acc
+      )
+      else aux (index + 1) acc xs
+  in
+  aux 0 [] list
+  |> List.rev
+;;
+
+slice_2 ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 2 6
+;;
+
+let%test _ = slice_2 ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 2 6
+             = ["c"; "d"; "e"; "f"; "g"]
+;;
+
+let slice_solution list i k =
+  let rec take n = function
+    | [] -> []
+    | h :: t -> if n = 0 then [] else h :: take (n - 1) t
+  in
+  let rec drop n = function
+    | [] -> []
+    | _ :: t as l -> if n = 0 then l else drop (n - 1) t
+  in
+  take (k - i + 1) (drop i list)
+;;
+
+
+let%test _ = slice_solution ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 2 6
+             = ["c"; "d"; "e"; "f"; "g"]
+;;
+
+let rotate list places =
+  let (left_side, right_side) = split list places in
+  right_side @ left_side
+;;
+
+rotate ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3
+;;
+
+let%test _ = rotate ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3
+             = ["d"; "e"; "f"; "g"; "h"; "a"; "b"; "c"]

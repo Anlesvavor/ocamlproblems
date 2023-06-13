@@ -449,6 +449,7 @@ let%test _ = slice_solution ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"] 2
 ;;
 
 let rotate list places =
+  let places = places mod (List.length list) in
   let (left_side, right_side) = split list places in
   right_side @ left_side
 ;;
@@ -458,3 +459,70 @@ rotate ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3
 
 let%test _ = rotate ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3
              = ["d"; "e"; "f"; "g"; "h"; "a"; "b"; "c"]
+
+(* Tail recursive *)
+let remove_at at list =
+  let rec aux count acc = function
+    | [] -> []
+    | x :: xs ->
+      if count = at
+      then (List.rev acc) @ xs
+      else aux (count + 1) (x :: acc) xs
+  in
+  aux 0 [] list
+;;
+
+let remove_at_2 at = function
+  | [] -> []
+  | x :: xs -> if at = 0 then xs else x :: remove_at (at - 1) xs
+;;
+
+let%test _ = remove_at 1 ["a";"b";"c";"d"]
+             = ["a";"c";"d"]
+;;
+
+let insert_at value at list =
+  let len = List.length list in
+  if at >= len
+  then list @ [value]
+  else (
+    let rec aux count acc = function
+      | [] -> List.rev acc
+      | x :: xs as t ->
+        if count = at
+        then (List.rev acc) @ (value :: t)
+        else aux (count + 1) (x :: acc) xs
+    in
+    aux 0 [] list
+  )
+;;
+
+let%test _ = insert_at "alfa" 1 ["a"; "b"; "c"; "d"]
+             = ["a"; "alfa"; "b"; "c"; "d"]
+
+let range from until =
+  let rec aux from until acc = if from <= until
+    then aux (from + 1) until (from :: acc)
+    else acc
+  in
+  if from > until
+  then aux until from []
+  else List.rev (aux from until [])
+;;
+
+let%test _ = range 4 9
+             = [4; 5; 6; 7; 8; 9]
+;;
+let%test _ = range 9 4
+             = [9; 8; 7; 6; 5; 4]
+
+let rand_select list amount =
+  let upper_bound = List.length list in
+  let rec aux acc = function
+    | 0 -> acc
+    | n -> aux ((List.nth list (Random.int upper_bound)) :: acc) (n - 1)
+  in
+  aux [] amount
+;;
+
+rand_select ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3;;

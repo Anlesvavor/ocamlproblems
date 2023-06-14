@@ -526,3 +526,59 @@ let rand_select list amount =
 ;;
 
 rand_select ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"] 3;;
+
+let lotto_select amount upper_bound =
+  let rec aux acc = function
+    | 0 -> acc
+    | n -> aux ((Random.int (1 + upper_bound)) :: acc) (n - 1)
+  in
+  aux [] amount
+;;
+
+lotto_select 6 49;;
+
+lotto_select 10 1;;
+
+let%test _ = lotto_select 10 1
+             = [1; 1; 1; 1; 1; 1; 1; 1; 1; 1]
+
+(* Just utop *)
+let remove_at at list =
+  let rec aux count acc = function
+    | [] -> []
+    | x :: xs ->
+      if count = at
+      then (List.rev acc) @ xs
+      else aux (count + 1) (x :: acc) xs
+  in
+  aux 0 [] list
+;;
+
+let permutation list =
+  let rec aux acc = function
+    | [] -> acc
+    | l ->
+      (* let l = List.mapi (fun i x -> x, i) l in *)
+      let len = List.length l in
+      let i = Random.int len in
+      let item = List.nth l i in
+      let new_list = remove_at i l in
+      aux (item :: acc) new_list
+  in
+  aux [] list
+;;
+
+permutation ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"]
+;;
+
+(* let rec combination chosen list = *)
+(*   let rec aux acc count list = *)
+(*     match list with *)
+(*     | [] -> acc *)
+(*     | x :: xs -> *)
+(*       if count = 0 *)
+(*       then x :: acc *)
+(*       else aux (x :: acc) (count - 1) xs *)
+(*   in *)
+(*   aux [] chosen list *)
+(* ;; *)

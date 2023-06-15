@@ -582,3 +582,22 @@ permutation ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"]
 (*   in *)
 (*   aux [] chosen list *)
 (* ;; *)
+
+let rec combination chosen list =
+  let len = List.length list in
+  let depth = len - (chosen - 1) in
+  let rec aux (count : int) (acc : 'a list list) (list : 'a list) =
+    match list with
+    | [] -> acc |> List.rev
+    | _ :: xs as t -> if count = 0
+      then aux 0 (t :: acc)  []
+      else aux (count - 1) (t :: acc) xs
+  in
+  let rec aux2 (acc : 'a list) (list : 'a list) : 'a list list = match list with
+    | [] -> [] (* Yeah, ignore this *)
+    | x :: xs as t ->
+      let len2 = List.length t in
+      if len2 = chosen
+      then List.map (fun el -> el :: acc ) xs
+      else aux2 (x :: acc) xs
+  in

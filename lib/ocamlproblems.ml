@@ -583,21 +583,131 @@ permutation ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"]
 (*   aux [] chosen list *)
 (* ;; *)
 
-let rec combination chosen list =
-  let len = List.length list in
-  let depth = len - (chosen - 1) in
-  let rec aux (count : int) (acc : 'a list list) (list : 'a list) =
-    match list with
-    | [] -> acc |> List.rev
-    | _ :: xs as t -> if count = 0
-      then aux 0 (t :: acc)  []
-      else aux (count - 1) (t :: acc) xs
+(* let rec combination chosen list = *)
+(*   let len = List.length list in *)
+(*   let depth = len - (chosen - 1) in *)
+(*   let rec aux (count : int) (acc : 'a list list) (list : 'a list) = *)
+(*     match list with *)
+(*     | [] -> acc |> List.rev *)
+(*     | _ :: xs as t -> if count = 0 *)
+(*       then aux 0 (t :: acc)  [] *)
+(*       else aux (count - 1) (t :: acc) xs *)
+(*   in *)
+(*   let rec aux2 (acc : 'a list) (list : 'a list) : 'a list list = match list with *)
+(*     | [] -> [] (\* Yeah, ignore this *\) *)
+(*     | x :: xs as t -> *)
+(*       let len2 = List.length t in *)
+(*       if len2 = chosen *)
+(*       then List.map (fun el -> el :: acc ) xs *)
+(*       else aux2 (x :: acc) xs *)
+(*   in *)
+
+(* let rec combination (choosen : int) (list : 'a list) : 'a list list = *)
+(*   let rec aux acc = function *)
+(*     | [] -> [[]] *)
+(*     | x :: xs as t -> *)
+(*       if (List.length acc) = (choosen - 1) *)
+(*       then List.map (fun el -> el :: acc) t *)
+(*       else aux (x :: acc) xs *\) *)
+(* in *)
+(* aux [] list |> List.map List.rev *)
+(* ;; *)
+(* combination 3 ["a"; "b"; "c"; "d"; "e"];; *)
+(* combination 3 [ "b"; "c"; "d"; "e"];; *)
+
+(* combination 3 ["a"; "b"; "c"; "d"];; *)
+(* combination 3 [ "b"; "c"; "d"];; *)
+
+
+let slice_2 (list : 'a list) (from : int) (until : int) =
+  let rec aux (index : int) (acc : 'a list) (list : 'a list) = match list with
+    | [] -> acc
+    | x :: xs ->
+      if from <= index
+      then (
+        if index <= until
+        then aux (index + 1) (x :: acc) xs
+        else acc
+      )
+      else aux (index + 1) acc xs
   in
-  let rec aux2 (acc : 'a list) (list : 'a list) : 'a list list = match list with
-    | [] -> [] (* Yeah, ignore this *)
-    | x :: xs as t ->
-      let len2 = List.length t in
-      if len2 = chosen
-      then List.map (fun el -> el :: acc ) xs
-      else aux2 (x :: acc) xs
+  aux 0 [] list
+  |> List.rev
+;;
+
+let merge (getter : 'a -> int) (alist : 'a list) (blist : 'a list) : 'a list =
+  let rec aux (acc : 'a list) (alist : 'a list) (blist : 'a list) =
+    match alist, blist with
+    | [], [] -> acc
+    | t, [] -> (List.rev t) @ acc
+    | [], t -> (List.rev t) @ acc
+    | (x :: xs as tx), (y :: ys as ty) ->
+      if (getter x) <= (getter y)
+      then aux (x :: acc) xs ty
+      else aux (y :: acc) tx ys
   in
+  aux [] alist blist
+  |> List.rev
+;;
+
+merge ((fun x -> x) : int -> int) [1;3;5;7] [0;2;4;6;8;10];;
+
+(* let%test _ = merge ((fun x -> x) : int -> int) [1;3;5;7] [0;2;4;6;8;10] *)
+(*              = [0;1;2;3;4;5;6;7;8;10] *)
+
+let rec merge_sort (getter : 'a -> int) (list : 'a list) : 'a list =
+  match list with
+  | [] -> []
+  | [x] -> [x]
+  | [x; y] -> if (getter x) < (getter y) then [x; y] else [y; x]
+  | _ ->
+    let len = List.length list in
+    let pivot = (len / 2) in
+    let left_size = merge_sort getter (slice_2 list 0 (pivot - 1)) in
+    let right_size = merge_sort getter (slice_2 list pivot (len - 1)) in
+    merge getter left_size right_size
+;;
+
+merge_sort ((fun x -> x) : 'a -> int) [4;1;8;4;2;0;56;3];;
+
+let length_sort (list : 'a list list) : 'a list list =
+  merge_sort ((fun el -> List.length el) : 'a list -> int) list
+;;
+
+length_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
+             ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]];;
+
+(* let%test _ = length_sort  [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"]; *)
+(*                            ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]] *)
+(*              = [["o"]; ["d"; "e"]; ["d"; "e"]; ["m"; "n"]; ["a"; "b"; "c"]; ["f"; "g"; "h"]; *)
+(*                 ["i"; "j"; "k"; "l"]] *)
+(* ;; *)
+
+let frequency (list : 'a list) : ((int * 'a) list) =
+  let rec aux (acc : ((int * 'a) list)) (list : (int * 'a) list) = match list with
+    | [] -> acc
+    | (n,x) :: xs ->
+      aux (List.map (fun (m, el) -> if el == x then (m + n, x) else (m, el)) acc) xs
+  in
+  aux (List.map (fun el -> (0, el)) list) (List.map (fun el -> (1, el)) list)
+;;
+
+let frequency_sort (list : 'a list) : ('a list) =
+  frequency list
+  |> merge_sort (fun (freq, _el) -> freq) (* Sort using the frequency *)
+  |> List.map (fun (_freq, el) -> el) (* Forget frequency of each elment *)
+;;
+
+let list = [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
+            ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]];;
+
+frequency list;;
+
+frequency_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
+                ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]];;
+
+let%test _ = frequency_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
+                             ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]]
+             =
+             [["i"; "j"; "k"; "l"]; ["o"]; ["a"; "b"; "c"]; ["f"; "g"; "h"]; ["d"; "e"];
+              ["d"; "e"]; ["m"; "n"]]

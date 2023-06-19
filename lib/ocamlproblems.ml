@@ -684,12 +684,12 @@ length_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
 (* ;; *)
 
 let frequency (list : 'a list) : ((int * 'a) list) =
-  let rec aux (acc : ((int * 'a) list)) (list : (int * 'a) list) = match list with
-    | [] -> acc
-    | (n,x) :: xs ->
-      aux (List.map (fun (m, el) -> if el == x then (m + n, x) else (m, el)) acc) xs
+  let f (facc : ((int * 'a) list)) (el : 'a) =
+    match List.find_opt (fun (_,x) -> x = el) facc with
+    | Some _ -> List.map (fun (n,y) -> if y = el then (n + 1,y) else (n,y) ) facc
+    | None -> (1, el) :: facc
   in
-  aux (List.map (fun el -> (0, el)) list) (List.map (fun el -> (1, el)) list)
+  List.fold_left f [] list
 ;;
 
 let frequency_sort (list : 'a list) : ('a list) =
@@ -708,6 +708,5 @@ frequency_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
 
 let%test _ = frequency_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d"; "e"];
                              ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]]
-             =
-             [["i"; "j"; "k"; "l"]; ["o"]; ["a"; "b"; "c"]; ["f"; "g"; "h"]; ["d"; "e"];
-              ["d"; "e"]; ["m"; "n"]]
+             = [["o"]; ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["f"; "g"; "h"]; ["a"; "b"; "c"];
+                ["d"; "e"]]

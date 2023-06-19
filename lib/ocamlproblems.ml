@@ -710,3 +710,54 @@ let%test _ = frequency_sort [["a"; "b"; "c"]; ["d"; "e"]; ["f"; "g"; "h"]; ["d";
                              ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["o"]]
              = [["o"]; ["i"; "j"; "k"; "l"]; ["m"; "n"]; ["f"; "g"; "h"]; ["a"; "b"; "c"];
                 ["d"; "e"]]
+
+let is_prime (n : int) =
+  let int_sqrt (n : int) =
+    n
+    |> float_of_int
+    |> sqrt
+    |> int_of_float
+  in
+  (* "obvious" cases *)
+  match n with
+  | 0 | 1 -> false
+  | 2 -> true
+  | _ ->
+    let upper_bound = int_sqrt n in
+    let rec aux (i : int) =
+      if (n mod i) = 0
+      then false
+      else if i < upper_bound
+      then aux (i + 1)
+      else true
+    in
+    aux 2
+;;
+
+let%test _ = is_prime 1 = false;;
+let%test _ = is_prime 60 = false;;
+let%test _ = is_prime 1024 = false;;
+let%test _ = is_prime 31 = true;;
+let%test _ = is_prime 17 = true;;
+
+let rec gcd (a : int) (b : int) : int =
+  match a, b with
+  | 0, b -> b
+  | a, 0 -> a
+  | a, b ->
+    let r = a mod b in
+    gcd b r
+;;
+
+gcd 13 27 = 1;;
+gcd 20536 7826 = 2;;
+
+let%test _ = gcd 13 27 = 1;;
+let%test _ = gcd 20536 7826 = 2;;
+
+let coprime (a : int) (b : int) : bool =
+  gcd a b = 1
+;;
+
+let%test _ = coprime 13 27 = true;;
+let%test _ = coprime 20536 7826 = false;

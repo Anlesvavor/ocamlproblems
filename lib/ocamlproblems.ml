@@ -539,8 +539,8 @@ lotto_select 6 49;;
 
 lotto_select 10 1;;
 
-let%test _ = lotto_select 10 1
-             = [1; 1; 1; 1; 1; 1; 1; 1; 1; 1]
+let%test _ = lotto_select 10 0
+             = [0; 0; 0; 0; 0; 0; 0; 0; 0; 0]
 
 (* Just utop *)
 let remove_at at list =
@@ -760,4 +760,72 @@ let coprime (a : int) (b : int) : bool =
 ;;
 
 let%test _ = coprime 13 27 = true;;
-let%test _ = coprime 20536 7826 = false;
+let%test _ = coprime 20536 7826 = false;;
+
+let phi (m : int) : int =
+  let rec aux (count : int) (curr : int) : int =
+    if curr < m
+    then if gcd curr m = 1
+      then aux (succ count) (succ curr)
+      else aux count (succ curr)
+    else count in aux 0 1
+;;
+
+let%test _ = phi 10 = 4
+;;
+
+let factors (n : int) : int list =
+  let rec aux (acc : int list) (f : int) (n : int) : int list =
+    if n = 1
+    then acc
+    else if n mod f = 0
+    then aux (f :: acc) 2 (n / f)
+    else aux acc (succ f) n
+  in
+  aux [] 2 n |> List.rev
+;;
+
+factors 315
+;;
+
+let%test _ = factors 315 = [3; 3; 5; 7]
+;;
+
+let encode_solution list =
+  let rec aux count acc =
+    function
+    | [] -> []
+    | [x] -> (count + 1, x) :: acc
+    | a :: (b :: _ as t) ->
+      if a = b
+      then aux (count + 1) acc t
+      else aux 0 ((count + 1, a) :: acc) t
+  in
+  List.rev (aux 0 [] list)
+;;
+
+let factorsb (n : int) : ((int * int) list) =
+  n |> factors |> encode_solution |> List.map (fun (a,b) -> b,a)
+;;
+
+factorsb 315
+;;
+
+let%test _ = factorsb 315 = [(3, 2); (5, 1); (7, 1)]
+;;
+
+let phi_improved (n : int) : int =
+  let int_pow (n : int) (p : int) : int =
+    Float.pow (float_of_int n) (float_of_int p)
+    |> int_of_float
+  in
+  n
+  |> factorsb
+  |> List.fold_left (fun acc (p, m) -> ((p - 1) * (int_pow p (m - 1))) * acc) 1
+;;
+
+let%test _ = phi_improved 10 = 4
+;;
+
+let%test _ = phi_improved 13 = 12
+;;

@@ -829,3 +829,36 @@ let%test _ = phi_improved 10 = 4
 
 let%test _ = phi_improved 13 = 12
 ;;
+
+let const _a b = b
+;;
+
+let rec from (n : int) : int Seq.node =
+  Seq.cons n (fun () -> from (n + 1)) ()
+;;
+
+let prime_seq () : int Seq.node =
+  Seq.filter is_prime (fun () -> from 2) ()
+;;
+
+(* Seq.iter (fun x -> Printf.printf "%d\n" x) (Seq.take 5 prime_seq) *)
+(* ;; *)
+
+let goldbach n =
+  prime_seq
+  |> Seq.take_while (fun x -> (x + 2) < n)
+  |> Seq.map (fun x -> (x, n - x))
+  |> Seq.find (fun (a,b) -> a + b = n && (is_prime b))
+  |> function
+  | None -> failwith "I guess that goldbach is wrong ;)"
+  | Some x -> x
+;;
+
+goldbach 28;;
+
+let%test _ = goldbach 28 = (5, 23)
+;;
+let%test _ = goldbach 68 = (7, 61)
+;;
+let%test _ = goldbach 54 = (7, 47)
+;;

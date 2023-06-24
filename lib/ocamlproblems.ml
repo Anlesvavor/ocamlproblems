@@ -862,3 +862,135 @@ let%test _ = goldbach 68 = (7, 61)
 ;;
 let%test _ = goldbach 54 = (7, 47)
 ;;
+let golbach_list (from : int) (until : int) : (int * (int * int)) list =
+  let p1 = prime_seq in
+  let p2 = prime_seq in
+  Seq.flat_map (fun a -> Seq.map (fun b -> (a + b, (a, b))) p2) p1
+  |> Seq.filter (fun (n, _) -> n mod 2 = 0 && (from <= n && n <= until ))
+  |> List.of_seq
+;;
+
+goldbach 28;;
+
+let%test _ = goldbach 28 = (5, 23)
+;;
+let%test _ = goldbach 68 = (7, 61)
+;;
+let%test _ = goldbach 54 = (7, 47)
+;;
+
+let is_odd (n : int) : bool = n mod 2 = 0;;
+let is_in_range (n : int) (from : int) (until : int) : bool = from <= n && n <= until;;
+
+let goldbach_list (from : int) (until : int) : (int * (int * int)) list =
+  let p1 = Seq.take_while (fun n -> n <= until) prime_seq in
+  let p2 = Seq.take_while (fun n -> n <= until) prime_seq in
+  Seq.flat_map (fun a -> Seq.map (fun b -> (a + b, (a, b))) p2) p1
+  |> Seq.filter (fun (n, _) -> is_odd n && is_in_range n from until)
+  |> List.of_seq
+  |> List.sort_uniq (fun (n1, _) (n2, _) -> compare n1 n2)
+;;
+
+goldbach_list 9 20
+;;
+
+let%test _ = goldbach_list 9 20
+             = [(10, (3, 7)); (12, (5, 7)); (14, (3, 11)); (16, (3, 13)); (18, (5, 13));
+                (20, (3, 17))]
+;;
+
+type bool_expr =
+  | Var of string
+  | Not of bool_expr
+  | And of bool_expr * bool_expr
+  | Or of bool_expr * bool_expr
+;;
+
+let table2 (a : string) (b : string) (expr : bool_expr) : ((bool * bool * bool) list) =
+  let a_list : ((string * bool) list) = [a,true; a,false] in
+  let b_list : ((string * bool) list) = [b,true; b,false] in
+  let ab_list = List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) b_list) a_list) in
+  let f (((a: string) ,(a_value : bool)),((_b : string), (b_value : bool))) =
+    let rec aux (expr : bool_expr) = match expr with
+      | And ((x : bool_expr), (y : bool_expr)) -> (aux x) && (aux y)
+      | Or ((x : bool_expr), (y : bool_expr)) -> (aux x) || (aux y)
+      | Not (x : bool_expr) -> not (aux x)
+      | Var (x : string) -> if x = a then a_value else b_value
+    in
+    let result = aux expr in
+    (a_value, b_value, result)
+  in
+  ab_list
+  |> List.map f
+;;
+
+table2 "a" "b" (And (Var "a", Or (Var "a", Var "b")))
+;;
+
+let%test _ = table2 "a" "b" (And (Var "a", Or (Var "a", Var "b")))
+             = [(true, true, true); (true, false, true); (false, true, false);
+                (false, false, false)]
+;;
+
+let power_list (n : int) (list : 'a list) : 'a list list =
+  let rec aux (n : int) (acc : 'a list list) = match n with
+    | 0 -> acc
+    | _ ->
+      let acc =
+        list
+        |> List.map (fun phi ->
+            acc |> List.map (fun psi -> phi :: psi))
+        |> List.flatten
+      in
+      aux (pred n) acc
+  in
+  aux n [[]]
+;;
+
+(* (power_list 3 [true;false])|> List.map (fun ell -> List.combine ["a";"b";"c"] ell );; *)
+
+let table (var_list : (string list)) (expr : bool_expr) : (((string * bool) list * bool) list) =
+  let var_list = (power_list (List.length var_list) [true;false])
+                 |> List.map (fun ell -> List.combine var_list ell )
+  in
+  let f vars =
+    let rec aux (expr : bool_expr) = match expr with
+      | And ((x : bool_expr), (y : bool_expr)) -> (aux x) && (aux y)
+      | Or ((x : bool_expr), (y : bool_expr)) -> (aux x) || (aux y)
+      | Not (x : bool_expr) -> not (aux x)
+      | Var (x : string) ->
+        (List.find_map (fun (str, value) -> if x = str then (Some value) else None) vars)
+        |> function Some v -> v | None -> failwith "Variable not found!!!"
+    in
+    let result = aux expr in
+    (vars, result)
+  in
+  var_list
+  |> List.map f
+;;
+
+table ["a"; "b"] (And (Var "a", Or (Var "a", Var "b")));;
+
+let%test _ = table ["a"; "b"] (And (Var "a", Or (Var "a", Var "b")))
+             = [([("a", true); ("b", true)], true); ([("a", true); ("b", false)], true);
+                ([("a", false); ("b", true)], false); ([("a", false); ("b", false)], false)]
+
+(* Thanks wikipedia ;) https://en.wikipedia.org/wiki/Gray_code#Constructing_an_n-bit_Gray_code *)
+let rec gray (n : int) : string list =
+  let prefix_zeros = List.map (fun el -> "0" ^ el) in
+  let prefix_ones = List.map (fun el -> "1" ^ el) in
+  match n with
+  | 1 -> ["0"; "1"]
+  | _ ->
+    let normal_pred_list = gray (pred n) in
+    let reversed_pred_list = List.rev normal_pred_list in
+    (prefix_zeros normal_pred_list) @ (prefix_ones reversed_pred_list)
+;;
+
+gray 1;;
+gray 2;;
+gray 3;;
+
+let%test _ = gray 1 = ["0"; "1"];;
+let%test _ = gray 2 = ["00"; "01"; "11"; "10"];;
+let%test _ = gray 3 = ["000"; "001"; "011"; "010"; "110"; "111"; "101"; "100"];;

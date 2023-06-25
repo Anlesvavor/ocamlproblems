@@ -994,3 +994,50 @@ gray 3;;
 let%test _ = gray 1 = ["0"; "1"];;
 let%test _ = gray 2 = ["00"; "01"; "11"; "10"];;
 let%test _ = gray 3 = ["000"; "001"; "011"; "010"; "110"; "111"; "101"; "100"];;
+
+type ('a, 'b) hufftree =
+  | None
+  | Node of 'a * ('a, 'b) hufftree * ('a, 'b) hufftree
+
+let huffman (list : (string * int) list) : ((string * string) list) =
+  let sorted = List.sort (fun (_, f1) (_, f2) -> compare f1 f2) list in
+  let leaf (str, freq) = Node ((Some str, freq), None, None) in
+  let get_weight_node x = match x with
+    | Node ((_, w), _, _) -> w
+    | None -> -1 (* """Minus infinity""" would be correct? *)
+  in
+  let rec construct acc = match acc with
+    | [] -> failwith "Invaid state"
+    | [x] -> x
+    | a :: b :: rest ->
+      let a_freq = get_weight_node a in
+      let b_freq = get_weight_node b in
+      let weight = a_freq + b_freq in
+      let node = if a_freq < b_freq
+        then Node ((Option.None, weight), a, b)
+        else Node ((Option.None, weight), b, a)
+      in
+      let f a b = compare (get_weight_node a) (get_weight_node b) in
+      construct (List.sort f (node :: rest))
+  in
+  let tree = construct (List.map (leaf) sorted) in
+  let huffman_from_tree tree =
+    let rec aux acc tree =
+      match tree with
+      | None -> failwith "Invalid state"
+      | Node ((Some str, _), _, _) -> [(str, acc)]
+      | Node (_, left, right) ->
+        (aux (acc ^ "0") left) @ (aux (acc ^ "1") right)
+    in
+    aux "" tree
+  in
+  huffman_from_tree tree
+;;
+
+let fs = [("a", 45); ("b", 13); ("c", 12); ("d", 16); ("e", 9); ("f", 5)];;
+
+huffman fs;;
+
+let%test _ = huffman fs
+             = [("a", "0"); ("c", "100"); ("b", "101"); ("f", "1100");
+                ("e", "1101"); ("d", "111")]

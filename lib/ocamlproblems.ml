@@ -1041,3 +1041,44 @@ huffman fs;;
 let%test _ = huffman fs
              = [("a", "0"); ("c", "100"); ("b", "101"); ("f", "1100");
                 ("e", "1101"); ("d", "111")]
+
+type 'a binary_tree =
+  | Empty
+  | Node of 'a * 'a binary_tree * 'a binary_tree
+  (* idk *)
+(* let rec cbal_tree (n : int) = *)
+(* ;; *)
+
+(* cbal_tree 3 *)
+
+(* let%test _ = cbal_tree 4 *)
+(*              = [Node ('x', Node ('x', Empty, Empty), *)
+(*                       Node ('x', Node ('x', Empty, Empty), Empty)); *)
+(*                 Node ('x', Node ('x', Empty, Empty), *)
+(*                       Node ('x', Empty, Node ('x', Empty, Empty))); *)
+(*                 Node ('x', Node ('x', Node ('x', Empty, Empty), Empty), *)
+(*                       Node ('x', Empty, Empty)); *)
+(*                 Node ('x', Node ('x', Empty, Node ('x', Empty, Empty)), *)
+(*                       Node ('x', Empty, Empty))] *)
+
+let is_symmetric a =
+  match a with
+  | Empty
+  | Node (_, Empty, Empty) -> true
+  | Node (_, Node _, Empty) | Node (_, Empty, Node _) -> false
+  | Node (_, l, r) ->
+    let rec is_mirror l r =
+      match l, r with
+      | Empty, Empty
+      | Node (_, Empty, Empty), Node (_, Empty, Empty) -> true
+      | Node (_, _, _), Empty | Empty, Node (_, _, _) -> false
+      | Node (_, al, ar), Node (_, bl, br) -> is_mirror al br && is_mirror ar bl
+    in
+    is_mirror l r
+;;
+
+is_symmetric (Node (1, Node (2, Empty, Empty), Node (2, Empty, Empty)))
+;;
+
+is_symmetric (Node (1, Node (2, Node (3, Empty, Empty), Empty), Node (2, Empty, Empty)))
+;;

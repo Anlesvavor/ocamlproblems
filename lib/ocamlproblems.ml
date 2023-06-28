@@ -1082,3 +1082,31 @@ is_symmetric (Node (1, Node (2, Empty, Empty), Node (2, Empty, Empty)))
 
 is_symmetric (Node (1, Node (2, Node (3, Empty, Empty), Empty), Node (2, Empty, Empty)))
 ;;
+
+let construct (list : int list) : int binary_tree =
+  let rec aux acc list =
+    match list with
+    | [] -> acc
+    | x :: xs ->
+      let rec insert acc x =
+        match acc with
+        | Empty -> Node (x, Empty, Empty)
+        | Node (value, left, right) ->
+          if x < value
+          then Node (value, (insert left x), right)
+          else Node (value, left, (insert right x))
+      in
+      aux (insert acc x) xs
+  in
+  aux Empty list
+;;
+
+construct [3; 2; 5; 7; 1];;
+
+
+is_symmetric (construct [5; 3; 18; 1; 4; 12; 21]);;
+not (is_symmetric (construct [3; 2; 5; 7; 4]));;
+
+
+let%test _ = is_symmetric (construct [5; 3; 18; 1; 4; 12; 21]) = true;;
+let%test _ = not (is_symmetric (construct [3; 2; 5; 7; 4])) = true;;

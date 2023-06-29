@@ -1110,3 +1110,41 @@ not (is_symmetric (construct [3; 2; 5; 7; 4]));;
 
 let%test _ = is_symmetric (construct [5; 3; 18; 1; 4; 12; 21]) = true;;
 let%test _ = not (is_symmetric (construct [3; 2; 5; 7; 4])) = true;;
+
+let rec count_leaves tree =
+  match tree with
+  | Empty -> 0
+  | Node (_, Empty, Empty) -> 1
+  | Node (_, l, r) -> (count_leaves l) + (count_leaves r)
+;;
+
+let%test _ = count_leaves (Node ('x', Node ('x', Empty, Empty),
+                                 Node ('x', Node ('x', Empty, Empty), Empty)))
+             = 2
+
+let rec leaves tree =
+  match tree with
+  | Empty -> []
+  | Node (_, Empty, Empty) as node -> [node]
+  | Node (_, l, r) -> (leaves l) @ (leaves r)
+;;
+
+let%test _ = leaves (Node ('x', Node ('a', Empty, Empty),
+                           Node ('x', Node ('b', Empty, Empty), Empty)))
+             = [Node ('a', Empty, Empty); Node ('b', Empty, Empty)]
+;;
+
+let internals tree =
+  let rec aux acc tree =
+    match tree with
+    | Empty -> acc
+    | Node (_, Empty, Empty) -> acc
+    | Node (v, l, r) -> aux (aux (v :: acc) l) r
+  in
+  aux [] tree
+;;
+
+let%test _ = internals (Node ('x', Node ('a', Empty, Empty),
+                              Node ('x', Node ('b', Empty, Empty), Empty)))
+             = ['x'; 'x']
+;;

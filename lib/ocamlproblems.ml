@@ -1148,3 +1148,33 @@ let%test _ = internals (Node ('x', Node ('a', Empty, Empty),
                               Node ('x', Node ('b', Empty, Empty), Empty)))
              = ['x'; 'x']
 ;;
+
+let split list at =
+  let rec aux count (acc_l, acc_r) = function
+    | [] -> (acc_l, acc_r)
+    | x :: xs ->
+      if count < at
+      then aux (count + 1) (x :: acc_l, acc_r) xs
+      else aux (count + 1) (acc_l, x :: acc_r) xs
+  in
+  let (acc_l, acc_r) = aux 0 ([], []) list in
+  (List.rev acc_l, List.rev acc_r)
+;;
+
+let complete_binary_tree (elements : 'a list)  =
+  let level list =
+    let len = (List.length list) |> float_of_int in
+    ((log len) /. (log 2.0))
+    |> int_of_float
+  in
+  let rec aux list =
+    match list with
+    | [] -> Empty
+    | x :: xs ->
+      let (r, l) = split xs (level xs) in
+      Node (x, aux l, aux r)
+  in
+  aux elements
+;;
+
+complete_binary_tree [1;2;3;4;5;6];;

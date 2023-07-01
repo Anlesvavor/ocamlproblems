@@ -1161,18 +1161,39 @@ let split list at =
   (List.rev acc_l, List.rev acc_r)
 ;;
 
-let complete_binary_tree (elements : 'a list)  =
+let balance_list list =
   let level list =
     let len = (List.length list) |> float_of_int in
     ((log len) /. (log 2.0))
     |> int_of_float
   in
+  let left_len = (List.length list) - (level list) in
+  (* let right_len = (level list) in *)
+  let rec aux acc_left acc_right list =
+    match list with
+    | [] -> (List.rev acc_left, List.rev acc_right)
+    | x :: xs ->
+      if (List.length acc_left) < left_len
+      then match xs with
+        | [] -> aux (x :: acc_left) (acc_right) []
+        | y :: zs -> aux (x :: acc_left) (y :: acc_right) zs
+      else aux acc_left (x :: acc_right) xs
+  in
+  aux [] [] list
+;;
+
+let complete_binary_tree (elements : 'a list) =
+  (* let level list = *)
+  (*   let len = (List.length list) |> float_of_int in *)
+  (*   ((log len) /. (log 2.0)) *)
+  (*   |> int_of_float *)
+  (* in *)
   let rec aux list =
     match list with
     | [] -> Empty
     | x :: xs ->
-      let (r, l) = split xs (level xs) in
-      Node (x, aux l, aux r)
+      let (r, l) = balance_list xs in
+      Node (x, aux r, aux l)
   in
   aux elements
 ;;

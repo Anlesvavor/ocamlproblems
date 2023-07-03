@@ -1183,11 +1183,6 @@ let balance_list list =
 ;;
 
 let complete_binary_tree (elements : 'a list) =
-  (* let level list = *)
-  (*   let len = (List.length list) |> float_of_int in *)
-  (*   ((log len) /. (log 2.0)) *)
-  (*   |> int_of_float *)
-  (* in *)
   let rec aux list =
     match list with
     | [] -> Empty
@@ -1199,3 +1194,34 @@ let complete_binary_tree (elements : 'a list) =
 ;;
 
 complete_binary_tree [1;2;3;4;5;6];;
+
+let example_layout_tree =
+  let leaf x = Node (x, Empty, Empty) in
+  Node ('n', Node ('k', Node ('c', leaf 'a',
+                              Node ('h', Node ('g', leaf 'e', Empty), Empty)),
+                   leaf 'm'),
+        Node ('u', Node ('p', Empty, Node ('s', leaf 'q', Empty)), Empty))
+;;
+
+let rec tree_size tree =
+  match tree with
+  | Empty -> 0
+  | Node (_, Empty, Empty) -> 1
+  | Node (_, l, r) -> (tree_size l) + (tree_size r) + 1
+;;
+
+let layout_binary_tree_1 tree =
+  let rec aux parent_x depth tree =
+    match tree with
+    | Empty -> Empty
+    | Node (value, l, r) ->
+      let x = 1 + parent_x + tree_size l in
+      let left_node = aux parent_x (succ depth) l in
+      let right_node = aux x (succ depth) r in
+      let y = depth in (* Clarity? *)
+      Node ((value, x, y), left_node, right_node)
+  in
+  aux 0 1 tree
+;;
+
+layout_binary_tree_1 example_layout_tree;;

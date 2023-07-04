@@ -1225,3 +1225,71 @@ let layout_binary_tree_1 tree =
 ;;
 
 layout_binary_tree_1 example_layout_tree;;
+
+let max_depth tree =
+  let rec aux curr tree =
+    match tree with
+    | Empty -> curr
+    | Node (_, Empty, Empty) -> curr
+    | Node (_, l, r) ->
+      let left_max = aux (succ curr) l in
+      let right_max = aux (succ curr) r in
+      max left_max right_max
+  in
+  aux 0 tree
+;;
+
+max_depth example_layout_tree;;
+
+let compute_separation depth tree =
+  let max_depth = (max_depth tree)
+  in
+  let int_pow (n : int) (p : int) : int =
+    Float.pow (float_of_int n) (float_of_int p)
+    |> int_of_float
+  in
+  int_pow 2 (max_depth - depth)
+;;
+
+let rec left_most_node tree =
+  match tree with
+  | Empty -> Empty
+  | Node (_, Empty, _) -> tree
+  | Node (_, l, _) -> left_most_node l
+;;
+
+let layout_binary_tree_2 tree =
+  let separation depth = compute_separation depth tree in
+  let rec aux is_right parent_x depth tree =
+    match tree with
+    | Empty -> Empty
+    | Node (value, l, r) ->
+      let left_node = aux false parent_x (succ depth) l in
+      let left_node_x = match left_node with
+        | Empty -> 0
+        | Node ((_, x, _),_ ,_) -> x
+      in
+      let x = if is_right
+        then parent_x + (separation (depth - 1))
+        else parent_x + (separation depth) + left_node_x
+      in
+      let () = print_int (separation depth) in
+      let () = print_char '_' in
+      let right_node = aux true x (succ depth) r in
+      let y = depth in
+      Node ((value, x, y), left_node, right_node)
+  in
+  aux false 0 1 tree
+;;
+
+let example_layout_tree_2 =
+  let leaf x = Node (x, Empty, Empty) in
+  Node ('n', Node ('k', Node ('c', leaf 'a',
+                              Node ('e', leaf 'd', leaf 'g')),
+                   leaf 'm'),
+        Node ('u', Node ('p', Empty, leaf 'q'), Empty))
+;;
+
+compute_separation 1 example_layout_tree_2;;
+
+layout_binary_tree_2 example_layout_tree_2;;

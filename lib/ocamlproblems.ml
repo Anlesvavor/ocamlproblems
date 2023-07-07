@@ -1254,11 +1254,31 @@ let compute_separation depth =
   int_pow 2 depth
 ;;
 
+compute_separation 2;;
+
 let rec left_most_node tree =
   match tree with
   | Empty -> Empty
   | Node (_, Empty, _) -> tree
   | Node (_, l, _) -> left_most_node l
+;;
+
+let left_length tree =
+  let rec aux depth tree =
+    match tree with
+    | Empty -> compute_separation depth
+    | Node (_, l, _) -> aux (succ depth) l
+  in
+  aux 0 tree
+;;
+
+let right_length tree =
+  let rec aux depth tree =
+    match tree with
+    | Empty -> compute_separation depth
+    | Node (_, _, r) -> aux (succ depth) r
+  in
+  aux 0 tree
 ;;
 
 let layout_binary_tree_2 tree =
@@ -1268,31 +1288,16 @@ let layout_binary_tree_2 tree =
     match tree with
     | Empty -> Empty
     | Node (value, l, r) ->
-      let x = if is_right
-        then max (parent_x - (separation (max_depth - depth))) 0
-        else parent_x + (separation (max_depth - depth))
-      in
-      let left_node = aux false x (succ depth) l in
-      let right_node = aux true x (succ depth) r in
-      (* let left_node_x = match left_node with *)
-      (*   | Empty -> 0 *)
-      (*   | Node ((_, x, _),_ ,_) -> x *)
-      (* in *)
-      let () = print_char value in
-      let () = print_char '_' in
-      let () = print_string "parent_x:" in
-      let () = print_int parent_x in
-      let () = print_char '_' in
-      let () = print_string "depth:" in
-      let () = print_int depth in
-      let () = print_char '_' in
-      let () = print_int (separation (max_depth - depth - 1)) in
-      let () = print_char ';' in
-      let () = print_newline () in
-      let y = depth + 1 in
+      let left_x = parent_x - (separation (max_depth - (succ depth))) in
+      let right_x = parent_x + (separation (max_depth - (succ depth))) in
+      let left_node = aux false left_x (succ depth) l in
+      let right_node = aux true right_x (succ depth) r in
+      let x = parent_x in
+      let y = succ depth in
       Node ((value, x, y), left_node, right_node)
   in
-  aux false 0 0 tree
+  let root_node_x = (left_length tree) -1 in
+  aux true root_node_x 0 tree
 ;;
 
 let example_layout_tree_2 =
@@ -1303,8 +1308,10 @@ let example_layout_tree_2 =
         Node ('u', Node ('p', Empty, leaf 'q'), Empty))
 ;;
 
+left_length example_layout_tree_2;;
+
 max_depth example_layout_tree_2;;
 
-compute_separation 4 ;;
+compute_separation 4;;
 
 layout_binary_tree_2 example_layout_tree_2;;

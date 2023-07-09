@@ -1284,20 +1284,20 @@ let right_length tree =
 let layout_binary_tree_2 tree =
   let max_depth = max_depth tree in
   let separation depth = compute_separation depth in
-  let rec aux is_right parent_x depth tree =
+  let rec aux parent_x depth tree =
     match tree with
     | Empty -> Empty
     | Node (value, l, r) ->
       let left_x = parent_x - (separation (max_depth - (succ depth))) in
       let right_x = parent_x + (separation (max_depth - (succ depth))) in
-      let left_node = aux false left_x (succ depth) l in
-      let right_node = aux true right_x (succ depth) r in
+      let left_node = aux left_x (succ depth) l in
+      let right_node = aux right_x (succ depth) r in
       let x = parent_x in
       let y = succ depth in
       Node ((value, x, y), left_node, right_node)
   in
   let root_node_x = (left_length tree) -1 in
-  aux true root_node_x 0 tree
+  aux root_node_x 0 tree
 ;;
 
 let example_layout_tree_2 =

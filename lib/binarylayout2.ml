@@ -183,48 +183,25 @@ let rec shift_layout amount tree =
 let layout_binary_tree_3 (tree : (char binary_tree)) : ((char * int * int) binary_tree) =
   let rec aux
       (parent_x : int)
-      (separation : int)
       (depth : int)
       (tree : (char binary_tree))
-    : ((char * int * int) binary_tree)
-    =
+    : ((char * int * int) binary_tree) =
     match tree with
     | Empty -> Empty
     | Node (value, l, r) ->
-      let left_x = parent_x - separation in
-      let right_x = parent_x + separation in
-      let left_node = apply_until
-          ~predicate: (fun node -> node |> coords |> all_unique)
-          ~f: (fun arg -> aux left_x arg (succ depth) l)
-          ~arg_update: succ
-          ~arg: separation
-      in
-      let right_node = apply_until
-          ~predicate: (fun node -> node |> coords |> all_unique)
-          ~f: (fun arg -> aux right_x arg (succ depth) r)
-          ~arg_update: succ
-          ~arg: separation
-      in
+      let left_node = aux parent_x (succ depth) l in
+      let right_node = aux parent_x (succ depth) r in
       let x = parent_x in
       let y = succ depth in
-      Node ((value, x, y), left_node, right_node)
+      apply_until
+        ~predicate: (fun node -> node |> coords |> all_unique)
+        ~f: (fun arg -> Node ((value, x, y),
+                              (shift_layout (-arg) left_node),
+                              (shift_layout arg right_node)))
+        ~arg_update: succ
+        ~arg: 1
   in
-  (* let left_length tree = *)
-  (*   let rec aux acc tree = *)
-  (*     match tree with *)
-  (*     | Empty -> acc *)
-  (*     | Node (_, l, _) -> aux (succ acc) l *)
-  (*   in *)
-  (*   aux 0 tree *)
-  (* in *)
-  (* let root_node_x = (left_length tree) -1 in *)
-  (* let tree = apply_until *)
-  (*     ~predicate: (fun node -> node |> coords |> all_unique) *)
-  (*     ~f: (fun arg -> aux 0 arg 0 tree) *)
-  (*     ~arg_update: succ *)
-  (*     ~arg: 1 *)
-  (* in *)
-  let tree = aux 0 1 0 tree in
+  let tree = aux 0 0 tree in
   let min = min_x tree in
   shift_layout (((-1) * min) + 1) tree
 ;;
@@ -260,9 +237,10 @@ let example_layout_tree =
        )
 ;;
 
-layout_binary_tree_3 example_layout_tree;;
-
 (layout_binary_tree_3 example_layout_tree)
 |> coords
 |> all_unique
 ;;
+
+layout_binary_tree_3 example_layout_tree;;
+

@@ -22,3 +22,18 @@ let rec preorder tree =
 ;;
 
 preorder example_layout_tree;;
+
+let rec inorder tree =
+  let rec aux acc tree =
+    match tree with
+    | Empty -> acc
+    | Node (v, l, r) ->
+      let acc = v :: aux acc l in
+      let acc = aux acc r in
+      acc
+  in
+  aux [] tree
+  |> List.fold_left (fun acc x -> String.make 1 x ^ acc) ""
+;;
+
+inorder example_layout_tree;;

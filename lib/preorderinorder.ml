@@ -44,10 +44,10 @@ inorder example_layout_tree;;
 let split_l_r_at at list =
   let rec aux acc list =
     match list with
-    | [] -> (acc, [])
+    | [] -> (List.rev acc, [])
     | x :: xs ->
       if x = at
-      then (acc, xs)
+      then (List.rev acc, xs)
       else aux (x :: acc) xs
   in
   aux [] list
@@ -90,8 +90,6 @@ let pre_in_tree (i : string) (p : string) : (char binary_tree) =
   in
   aux i p
 ;;
-
-
 
 pre_in_tree "dbeacgf" "abdecfg"
 ;;

@@ -103,3 +103,17 @@ inorder example_layout_tree
 (pre_in_tree (inorder example_layout_tree) (preorder example_layout_tree))
 = example_layout_tree
 ;;
+
+let rec preorder_dotstring tree =
+  let rec aux acc tree =
+    match tree with
+    | Empty -> '.' :: acc
+    | Node (v, l, r) ->
+      aux (aux (v :: acc) l) r
+  in
+  aux [] tree
+  |> List.fold_left (fun acc x -> String.make 1 x ^ acc) ""
+;;
+
+preorder_dotstring example_layout_tree
+;;
